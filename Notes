@@ -1,14 +1,33 @@
-1. Selected Blocks
+1. 	World's Features
+
+- Six places
+- Maximun size is 3
+
+2. Selected Blocks
 
 - Place
-- Blocks   	(Restricted to one place)
-- Pyramids 	(Restricted to one place)
+- Blocks   				(Restricted to one place)
+- Pyramids 				(Restricted to one place)
+- Cubic Boxes 		(Restricted to one place, openeds or closeds)
+- Horizontal Parallelepiped
 
-2. Possibles Stacks
+3. Possibles Stacks
 
-- Pyramids on Blocks
+- Pyramids on Blocks - OK
+- Spheres on Closed Box
 
 
-3. Impossibles Stacks
+4. Impossibles Stacks
 
-- Blocks on Pyramids
+- Blocks on Pyramids - OK
+- Pyramids on pyramids
+- All objects on Spheres
+- Spheres on Pyramids
+
+5. World
+
+A state in the blocks world
+			
+			a a a b   c
+		  = = = = = = 
+place 1 2 3 4 5 6

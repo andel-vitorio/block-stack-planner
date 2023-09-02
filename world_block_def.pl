@@ -9,16 +9,58 @@ can(move(Object, From, To), [clear(Block), clear(To), on(Block, From)]) :-
 	Block \== From,											% Block not moved from itself
 	safe_to_stack(Object, To).					% It's safe to stack
 
-% safe_to_stack(Object, Object): True if it's a block on a pyramid or false, otherwise.
+% safe_to_stack(Object, Object). Pryramids and blocks
 safe_to_stack(Object, To) :-
 	state1(State),											% Current State
 	is_clear(Object, State),        			% 
 	is_clear(To, State),
 	(
+		( sphere(Object), opened_box(To) ) ;
 		( block(Object), \+ pyramids(To)) ;
+		( block(Object), block(To)) ;
+		( pyramids(Object), \+ pyramids(To)) ;
 		( pyramids(Object), block(To))
 	).
 
+
+% Bloco a ser movido é menor que o bloco onde sera posicionado
+safe_to_stack(Object, To) :-
+	size(Object, SizeOfObject),
+	size(To, SizeTo),
+	(
+		SizeOfObject =< SizeTo ;
+		(
+			SizeOfObject = 3, SizeTo = 1,
+			state1(State),
+			memberchk(on(To, Pi), State),
+			Pi > 1, Pi < 6
+		)
+	).
+
+safe_to_stack(Object, p([Bi, Bj])) :-
+	size(Object, SizeObject),
+	SizeObject = 2,
+	state1(State),
+	memberchk(on(Bi, Pi), State),
+	memberchk(on(Bj, Pj), State),
+	size(Bi, Si), size(Bj, Sj),
+	SizeTo is abs(Pi - Pj) + 1 - (Si + Sj),
+	SizeTo = 0.
+
+safe_to_stack(Object, p([Bi, Bj])) :-
+	size(Object, SizeObject),
+	SizeObject = 3,
+	state1(State),
+	memberchk(on(Bi, Pi), State),
+	memberchk(on(Bj, Pj), State),
+	SizeTo is abs(Pi - Pj) + 1,
+	(SizeTo = 2 ; SizeTo = 3).
+
+safe_to_stack(Object, To) :-
+	size(Object, SizeOfObject),
+	size(To, SizeTo),
+	SizeOfObject =< SizeTo.
+	
 
 is_clear(Object, State) :- !,
 	memberchk(clear(Object), State).
@@ -35,18 +77,25 @@ object(X) :- 													% X is an object if
 	block(X).														% X is a block
 
 % A blocks world
-pyramids(a).
+horizontal_parallelepiped(a).
 block(b).
+block(c).
+place(0).
 place(1).
 place(2).
 place(3).
 place(4).
+place(5).
 
-% A state in the blocks world
-%
-%				
-%				a   b
-%				= = = =
-% place 1 2 3 4
+size(a, 3).
+size(b, 1).
+size(c, 1).
 
-state1([clear(a), on(a, 1), clear(2), clear(b), on(b, 3), clear(4)]).
+state1([
+	clear(3),
+	clear(4),
+	clear(5),
+	on(a, pos([1, 3])),
+	on(b, 4),
+	on(c, 6)
+]).
