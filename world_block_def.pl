@@ -1,101 +1,91 @@
-% Definition of action move( Block, From, To) in blocks world
-% can(Action, Condition): Action possible if Condition true
-can(move(Object, From, To), [clear(Block), clear(To), on(Block, From)]) :-
-	\+ place(Object),										% Object to be moved cannot be a place
-	object(To),													% 'To' is a block or a place
-	To \== Block,												% Block cannot be moved to itself
-	object(From),												% 'From' is a block or a place
-	From \== To,												% Move to new position
-	Block \== From,											% Block not moved from itself
-	safe_to_stack(Object, To).					% It's safe to stack
+state1([clear(3),on(c,p([1,2])),on(b,6),on(a,4), on(d,p([a,b]))]).
 
-% safe_to_stack(Object, Object). Pryramids and blocks
-safe_to_stack(Object, To) :-
-	state1(State),											% Current State
-	is_clear(Object, State),        			% 
-	is_clear(To, State),
-	(
-		( sphere(Object), opened_box(To) ) ;
-		( block(Object), \+ pyramids(To)) ;
-		( block(Object), block(To)) ;
-		( pyramids(Object), \+ pyramids(To)) ;
-		( pyramids(Object), block(To))
-	).
+block(a1).
+block(a2).
+block(b1).
+block(c1).
+pyramid(d1).
 
+size(a1, 1).
+size(a2, 1).
+size(b1, 2).
+size(c1, 3).
+size(d1, 1).
 
-% Bloco a ser movido é menor que o bloco onde sera posicionado
-safe_to_stack(Object, To) :-
-	size(Object, SizeOfObject),
-	size(To, SizeTo),
-	(
-		SizeOfObject =< SizeTo ;
-		(
-			SizeOfObject = 3, SizeTo = 1,
-			state1(State),
-			memberchk(on(To, Pi), State),
-			Pi > 1, Pi < 6
-		)
-	).
-
-safe_to_stack(Object, p([Bi, Bj])) :-
-	size(Object, SizeObject),
-	SizeObject = 2,
-	state1(State),
-	memberchk(on(Bi, Pi), State),
-	memberchk(on(Bj, Pj), State),
-	size(Bi, Si), size(Bj, Sj),
-	SizeTo is abs(Pi - Pj) + 1 - (Si + Sj),
-	SizeTo = 0.
-
-safe_to_stack(Object, p([Bi, Bj])) :-
-	size(Object, SizeObject),
-	SizeObject = 3,
-	state1(State),
-	memberchk(on(Bi, Pi), State),
-	memberchk(on(Bj, Pj), State),
-	SizeTo is abs(Pi - Pj) + 1,
-	(SizeTo = 2 ; SizeTo = 3).
-
-safe_to_stack(Object, To) :-
-	size(Object, SizeOfObject),
-	size(To, SizeTo),
-	SizeOfObject =< SizeTo.
-	
-
-is_clear(Object, State) :- !,
-	memberchk(clear(Object), State).
-
-% adds(Action, Relationships): Action establishes Relationships 
-adds(move(X, From, To), [on(X,To), clear(From)]).
-
-% deletes(Action, Relationships): Action destroys Relationships 
-deletes(move(X, From, To), [on(X, From), clear(To)]).
-
-object(X) :- 													% X is an object if
-	place(X)														% X is a place
-	;																		% or
-	block(X).														% X is a block
-
-% A blocks world
-horizontal_parallelepiped(a).
-block(b).
-block(c).
-place(0).
 place(1).
 place(2).
 place(3).
 place(4).
 place(5).
+place(6).
 
-size(a, 3).
-size(b, 1).
-size(c, 1).
+% Move the block from a to b
+can(move(Block, p([Ai,Aj]), p([Bi,Bj])),[clear(Block),clear(Bi),clear(Bj),on(Block,p([Ai,Aj]))]):-
+	object(Block),           
+	object(Ai),               
+	object(Aj),
+	Ai \== Block,           
+	object(Bi), object(Bj),   
+	Bi \== Ai,              
+	Bj \== Aj,              
+	Block \== Bi,
+	safe_to_stack(Block, p([Bi, Bj])).
 
-state1([
-	clear(3),
-	clear(4),
-	clear(5),
-	on(a, pos([1, 3])),
-	on(b, 4),
-	on(c, 6)
-]).
+% Move the block from A to B
+can(move(Block, p([Ai,Aj]), B),[clear(Block),clear(B),on(Block,p([Ai,Aj]))]) :-
+	object(Block),           
+	object(A),
+	A \== Block,           
+	object(Bi), object(Bj),   
+	Bi \== A,               
+	Bj \== A,
+	safe_to_stack(Block, p([Bi,Bj])).
+
+
+can(move(Block,From,To),[clear(Block),clear(To),on(Block,From)]) :-
+	object(Block),          
+	object(To),            
+	To \== Block,           
+	object(From),           
+	From \== To,           
+	Block \== From,
+	safe_to_stack(Block, To).      
+
+% It's safe to stack a smaller block on top of a larger one.
+safe_to_stack(Block, To) :-
+	\+ pyramid(To),
+	size(Block, Sb),
+	size(To, St),
+	Sb =< St.
+
+% It's safe to stack a block that's one unit larger than the other.
+safe_to_stack(Block, p([Bi, Bj])) :-
+	\+ pyramid(Bi), \+ pyramid(Bj),
+	(
+		place(Bi), place(Bj) ;
+		(
+			size(Block,Sb),
+			size(Bi,Si),
+			size(Bj,Sj),
+			SizeTo is Si + Sj,
+			Sb =< SizeTo + 1
+		)
+	).
+
+% It's safe to stack blocks with the centroids aligned.
+safe_to_stack(Block, To) :-
+	\+ pyramid(To),
+	size(Block, Sb),
+	size(To,St),
+	Diff is abs(Sb - St),
+	Diff mod 2 =:= 0.
+
+
+adds(move(X,From,To),[on(X,To),clear(From)]). 
+
+deletes(move(X,From,To),[on(X,From),clear(To)]).
+
+object(X):-
+	place(X);
+	block(X);
+	pyramid(X).
